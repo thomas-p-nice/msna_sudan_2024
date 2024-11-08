@@ -391,7 +391,3 @@ ggplot(main, aes(x = factor(outcome12_2), fill = factor(outcome12_2))) +
        y = "Count") +
   scale_x_discrete(labels = c("No" = 0, "Yes" = 1)) +
   theme_minimal()
-
-
-
-         
