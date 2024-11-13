@@ -18,6 +18,7 @@ library(dplyr)
 library(writexl)
 library(unhcrthemes)
 library(extrafont)
+library(scales)
 
 #font_import()
 loadfonts(device = "win")
@@ -152,12 +153,14 @@ table(main$impact2_2)
 
 
 ggplot(main |> to_factor(), aes(x = impact2_2, fill = impact2_2)) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households residing in physically safe and secure settlements with access to basic facilities",
        x = "",
        y = "") +
   theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) +
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, 
+                     limits = c(0, 1)) +
     scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
   coord_flip() + guides(fill="none")
@@ -185,12 +188,13 @@ main <- main %>%
 table(main$impact2_3)
 
 ggplot(main |> to_factor() |> filter(!is.na(impact2_3)), aes(x = factor(impact2_3), fill = factor(impact2_3))) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households with access to health services",
        x = "",
        y = "") +
   theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) + 
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
     scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
   coord_flip() + guides(fill="none")
@@ -218,10 +222,11 @@ main <- main %>%
 table(main$outcome8_2)
 
 ggplot(main |> to_factor(), aes(x = factor(outcome8_2), fill = factor(outcome8_2))) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households with primary reliance on clean (cooking) fuels and technology", x = "", y = "") +
   theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) + 
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
   scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
   coord_flip() + 
@@ -229,7 +234,7 @@ ggplot(main |> to_factor(), aes(x = factor(outcome8_2), fill = factor(outcome8_2
 
 ggsave("figures/outcome8_2.png", width =10, height = 4)
 
-###9.2 Proportion of people that have energy to ensure lighting
+###9.2 Households that have energy to ensure lighting
 ### The below Calculates percentage of PoC having access to clean fuel for lighting and / or basic connectivity (9.1 Outcome Indicator)
 
 main <- main %>%
@@ -256,15 +261,17 @@ main <- main %>%
 table(main$outcome9_2)
 
 ggplot(main |> to_factor(), aes(x = factor(outcome9_2), fill = factor(outcome9_2))) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households with energy to ensure lighting",
        x = "",
        y = "") +
   theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) +  
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +  
     scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
+  coord_flip() + 
+  guides(fill="none")
 
 ggsave("figures/outcome9_2.png", width =10, height = 4)
 
@@ -295,11 +302,13 @@ main <- main %>%
 table(main$outcome12_1)
 
 ggplot(main |> to_factor(), aes(x = factor(outcome12_1), fill = factor(outcome12_1))) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count)), accuracy = 2), 
+                y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households with at least basic drinking water services",
        x = "",
        y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) + 
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
   theme_unhcr() +
   scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
@@ -336,9 +345,10 @@ main <- main %>%
 table(main$outcome12_2)
 
 ggplot(main |> to_factor(), aes(x = outcome12_2, fill = outcome12_2)) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households with access to a safe household toilet", x = "", y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) +
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +
   theme_unhcr() +
   scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
@@ -365,15 +375,17 @@ main <- main %>%
 table(main$outcome16_2)
 
 ggplot(main |> to_factor(), aes(x = outcome16_2, fill = outcome16_2)) +
-  geom_bar(width = 0.6) +
+  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
+  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
   labs(title = "Households covered by national social protection (one of three main income sources)", x = "", y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1))) +
+  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +
   theme_unhcr() +
   scale_fill_unhcr_d(palette = "pal_unhcr") +
   theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
   coord_flip() + guides(fill="none")
 
 ggsave("figures/outcome16_2.png", width =10, height = 4)
+
 # Save table --------------------------------------------------------------
 
 write_xlsx(main, "data/Sudan_MSNA_HH_IN_PERSON_DC_2024_RMS_ind.xlsx")
