@@ -391,6 +391,7 @@ impact2_3_plot <- bar_chart("Impact 2.3", "Impact 2.3: Proportion of households 
 impact2_3_plot 
 ggsave("figures/impact2_3.png", width=10, height=4)
 
+<<<<<<< HEAD
 outcome8_2_plot <- bar_chart("Outcome 8.2", "Outcome 8.2: Proportion of households with primary reliance on clean (cooking) fuels and technology")
 outcome8_2_plot
 ggsave("figures/outcome8_2.png", width=10, height=4)
