@@ -1,0 +1,85 @@
+---
+title: "MSNA Sudan 2024 RMS Indicators"
+institute: "Global Survey Team"
+date: "19 November 2024"
+format: unhcr-revealjs
+---
+
+```{r}
+source("msna_sudan_2024_rms.R")
+```
+
+
+# Impact indicators {.slide-blue}
+
+## 
+
+```{r}
+impact2_2_plot
+```
+
+Includes access to: habitable housing, basic facilities, and security from natural hazards
+
+## 
+
+```{r}
+impact2_3_plot
+```
+
+Measures the share of households that accessed health care among those that needed it.
+
+# Outcome indicators {.slide-blue}
+
+##
+
+```{r}
+outcome8_2_plot
+```
+
+Any type of cooking fuel and technology meeting the WHO set standards on indoor air emissions
+
+## 
+
+```{r}
+outcome9_2_plot
+```
+
+Clean fuels for lighting include electricity, renewable energy, fuels considered clean for health and battery flashlights.
+
+## 
+
+```{r}
+outcome12_1_plot
+```
+
+Basic drinking water services: drinking water from an improved source, with collection time max. 30 minutes
+
+## 
+
+```{r}
+outcome12_2_plot
+```
+
+Safe household toilets: improved sanitation facilities, emptied safely and not shared with other households.
+
+## 
+
+```{r}
+outcome13_2_plot
+```
+
+Note: Different wording means that the indicator here is not quite the same as in the RMS.
+
+## 
+
+```{r}
+outcome16_2_plot
+```
+
+Note: Here we only capture national social assistance if it was one of three main income sources.
+
+## Notes
+
+- Some indicator calculation has been adapted to use available questions
+
+- All indicators calculated here are at the household-level, where some corresponding RMS indicators are individual-level
