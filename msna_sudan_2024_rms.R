@@ -384,28 +384,36 @@ bar_chart <- function(ind, title_text) {
     guides(fill = "none")
 }
 
-bar_chart("Impact 2.2", "Impact 2.2: Proportion of households residing in physically safe and secure settlements with access to basic facilities")
+impact2_2_plot <- bar_chart("Impact 2.2", "Impact 2.2: Proportion of households residing in physically safe and secure settlements with access to basic facilities")
+impact2_2_plot
 ggsave("figures/impact2_2.png", width=10, height=4)
 
-bar_chart("Impact 2.3", "Impact 2.3: Proportion of households with access to health services")
+impact2_3_plot <- bar_chart("Impact 2.3", "Impact 2.3: Proportion of households with access to health services")
+impact2_3_plot 
 ggsave("figures/impact2_3.png", width=10, height=4)
 
-bar_chart("Outcome 8.2", "Outcome 8.2: Proportion of households with primary reliance on clean (cooking) fuels and technology")
+impact8_2_plot <- bar_chart("Outcome 8.2", "Outcome 8.2: Proportion of households with primary reliance on clean (cooking) fuels and technology")
+impact8_2_plot
 ggsave("figures/outcome8_2.png", width=10, height=4)
 
-bar_chart("Outcome 9.2", "Outcome 9.2: Proportion of households with clean energy to ensure lighting")
+impact9_2_plot <- bar_chart("Outcome 9.2", "Outcome 9.2: Proportion of households with clean energy to ensure lighting")
+impact9_2_plot
 ggsave("figures/outcome9_2.png", width=10, height=4)
 
-bar_chart("Outcome 12.1", "Outcome 12.1: Proportion of households with at least basic drinking water services")
+impact12_1_plot <- bar_chart("Outcome 12.1", "Outcome 12.1: Proportion of households with at least basic drinking water services")
+impact12_1_plot
 ggsave("figures/outcome12_1.png", width=10, height=4)
 
-bar_chart("Outcome 12.2", "Outcome 12.2: Proportion of households with access to a safe household toilet")
+impact12_2_plot <- bar_chart("Outcome 12.2", "Outcome 12.2: Proportion of households with access to a safe household toilet")
+impact12_2_plot
 ggsave("figures/outcome12_2.png", width=10, height=4)
 
-bar_chart("Outcome 13.2", "Outcome 13.2: Proportion of households who do not self-report negative changes in their last monthly income compared to other months*")
+impact13_2_plot <- bar_chart("Outcome 13.2", "Outcome 13.2: Proportion of households who do not self-report negative changes in their last monthly income compared to other months*")
+impact13_2_plot
 ggsave("figures/outcome13_2.png", width=10, height=4)
 
-bar_chart("Outcome 16.2", "Outcome 16.2: Proportion of households covered by national social protection floors/systems*")
+impact16_2_plot <- bar_chart("Outcome 16.2", "Outcome 16.2: Proportion of households covered by national social protection floors/systems*")
+impact16_2_plot
 ggsave("figures/outcome16_2.png", width=10, height=4)
 
 # Save tables -------------------------------------------------------------
