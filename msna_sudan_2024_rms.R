@@ -24,10 +24,35 @@ library(scales)
 loadfonts(device = "win")
 
 ### Load data
-main <- read_excel(
+
+#### Refugees
+main_ref <- read_excel(
   "data/Sudan_MSNA_HH_IN_PERSON_DC_2024.xlsx",
   sheet = "Sudan MSNA HH IN PERSON DC"
 )
+
+#### IDPs
+main_idp <- read_excel(
+  "data/IOM SUDAN MSNA 2024 Data set.xlsx",
+  sheet = "SDN_MSNA_HH_data_clean")
+
+##### Format columns for easy binding
+main_ref <- main_ref |>
+  mutate(across(everything(), as.character))
+
+main_idp <- main_idp |>
+  mutate(across(everything(), as.character))
+
+#### Merge 
+main <- bind_rows(main_ref, main_idp)
+
+#### Remove returnees (only few observations, probably errors)
+main <- main |>
+  filter(strata != "returnees") |>
+  mutate(strata = case_when(strata == "refugee" ~ "Refugee",
+                            strata == "idp" ~ "IDP",
+                            strata == "non_disp" ~ "Non-displaced",
+                            TRUE ~ strata))
 
 # Core Impact Indicators --------------------------------------------------
 
@@ -48,9 +73,21 @@ main <- main %>%
                                    "Yes" = 1
                                  ),
                                  label = "Access to electricity"))
-
-table(main$electricity)
-
+# Function for table by group
+group_table <- function(dat = main, var) {
+  dat_grouped <- dat |>
+    filter(!is.na({{var}}), strata != "returnees") |>
+    group_by(strata, {{var}}) |>
+    summarise(n = n()) |>
+    group_by(strata) |>
+    mutate(prop = n / sum(n)) |> 
+    ungroup() |>
+    to_factor() |>
+    filter({{var}} == "Yes")
+  
+  return(dat_grouped)
+}
+group_table(var = electricity)
 
 ###Step2. Healthcare
 
@@ -61,14 +98,14 @@ main <- main %>%
   mutate(healthcare = case_when(hh_min_health %in% c("15", "1630", "3160") ~ 1,
                                 hh_min_health == "more_than_ 60_60" ~ 0)
   ) %>%
-  mutate( healthcare = labelled(healthcare,
-                                labels = c(
+  mutate(healthcare = labelled(healthcare,
+                               labels = c(
                                   "No" = 0,
                                   "Yes" = 1
                                 ),
                                 label = "Access to healthcare facility"))
 
-table(main$healthcare)
+group_table(var = healthcare)
 
 ###Step3. Drinking water
 
@@ -94,7 +131,7 @@ main <- main %>%
                                   ),
                                   label = "Access to drinking water"))
 
-table(main$drinkingwater)
+group_table(var = drinkingwater)
 
 ###Step 4. Habitable housing
 
@@ -104,7 +141,7 @@ main <- main %>%
   mutate(hh_shelter_issues = case_when(hh_shelter_issues == "unk" ~ NA_character_, TRUE ~ hh_shelter_issues)) |>
   mutate(shelter = case_when(grepl("leak|lock|lack_space", hh_shelter_issues) ~ 0, TRUE ~ 1))
 
-table(main$shelter)
+group_table(var = shelter)
 
 ##Step 5. Safe and secure settlements are those with no risks and hazards like flooding, landslides,
 ###landmines, and close proximity to military installations and hazardous zones
@@ -117,7 +154,7 @@ main <- main %>%
     TRUE ~ 0
   ))
 
-table(main$secure)
+group_table(var = secure)
 
 ##Step 6. Combine all services
 
@@ -145,27 +182,8 @@ main <- main %>%
     )
   )
 
+impact2_2_tab <- group_table(var = impact2_2)
 
-table(main$impact2_2)
-
-#table_impact2_2 <- table(main$impact2_2, main$pop_groups)
-#percentage_impact2_2 <- prop.table(table_impact2_2, margin = 2) * 100
-
-
-ggplot(main |> to_factor(), aes(x = impact2_2, fill = impact2_2)) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households residing in physically safe and secure settlements with access to basic facilities",
-       x = "",
-       y = "") +
-  theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, 
-                     limits = c(0, 1)) +
-    scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
-
-ggsave("figures/impact2_2.png", width =10, height = 4)
 
 ###2.3 Proportion of people with access to health services
 
@@ -183,23 +201,7 @@ main <- main %>%
                               "No" = 0,
                               "Yes" = 1
                             ),
-                            label="Proportion of people with access to health"))
-
-table(main$impact2_3)
-
-ggplot(main |> to_factor() |> filter(!is.na(impact2_3)), aes(x = factor(impact2_3), fill = factor(impact2_3))) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households with access to health services",
-       x = "",
-       y = "") +
-  theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
-    scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
-
-ggsave("figures/impact2_3.png", width =10, height = 4)
+                            label="Household with access to health services"))
 
 # Outcome indicators ------------------------------------------------------
 
@@ -215,24 +217,9 @@ main <- main %>%
       outcome8_2,
       labels = c("No" = 0, 
                  "Yes" = 1),
-      label = "Proportion of people with primary reliance on clean (cooking) fuels and technology"
+      label = "Household with primary reliance on clean (cooking) fuels and technology"
     )
   )
-
-table(main$outcome8_2)
-
-ggplot(main |> to_factor(), aes(x = factor(outcome8_2), fill = factor(outcome8_2))) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households with primary reliance on clean (cooking) fuels and technology", x = "", y = "") +
-  theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
-  scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + 
-  guides(fill="none")
-
-ggsave("figures/outcome8_2.png", width =10, height = 4)
 
 ###9.2 Households that have energy to ensure lighting
 ### The below Calculates percentage of PoC having access to clean fuel for lighting and / or basic connectivity (9.1 Outcome Indicator)
@@ -254,26 +241,9 @@ main <- main %>%
       outcome9_2,
       labels = c("No" = 0, 
                  "Yes" = 1),
-      label = "Proportion of people that have energy to ensure lighting"
+      label = "Household with energy to ensure lighting"
     )
   )
-
-table(main$outcome9_2)
-
-ggplot(main |> to_factor(), aes(x = factor(outcome9_2), fill = factor(outcome9_2))) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households with energy to ensure lighting",
-       x = "",
-       y = "") +
-  theme_unhcr() +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +  
-    scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + 
-  guides(fill="none")
-
-ggsave("figures/outcome9_2.png", width =10, height = 4)
 
 ###12.1 Proportion of people using at least basic drinking water services
 
@@ -297,24 +267,7 @@ main <- main %>%
                                   "No" = 0,
                                   "Yes" = 1
                                 ),
-                                label = "Access to drinking water"))
-
-table(main$outcome12_1)
-
-ggplot(main |> to_factor(), aes(x = factor(outcome12_1), fill = factor(outcome12_1))) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count)), accuracy = 2), 
-                y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households with at least basic drinking water services",
-       x = "",
-       y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) + 
-  theme_unhcr() +
-  scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
-
-ggsave("figures/outcome12_1.png", width =10, height = 4)
+                                label = "Household with at least basic drinking water services"))
 
 ###12.2 Proportion of people with access to a safe household toilet
 
@@ -340,21 +293,25 @@ main <- main %>%
                                   "No" = 0,
                                   "Yes" = 1
                                 ),
-                                label = "Proportion of people with access to at least basic sanitation services."))
+                                label = "Household with access to at least basic sanitation services."))
 
-table(main$outcome12_2)
+###13.2 Proportion of people who self-report positive changes in their income compared to previous year
 
-ggplot(main |> to_factor(), aes(x = outcome12_2, fill = outcome12_2)) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households with access to a safe household toilet", x = "", y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +
-  theme_unhcr() +
-  scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
+# Here there is a single question on whether the household income dropped in the last month, meaning that the indicator measures something different.
 
-ggsave("figures/outcome12_2.png", width =10, height = 4)
+main <- main %>%
+  mutate(outcome13_2 = case_when(
+    hh_perceived_income_drop == "no" ~ 1,  # Income did not decrease
+    TRUE ~ 0  # Default to 0
+  )) %>%
+  mutate(outcome13_2 = labelled(outcome13_2,
+                                labels = c(
+                                  "No" = 0,
+                                  "Yes" = 1
+                                ),
+                                label = "No self-reported negative changes in their last monthly income income compared to previous other months"
+  ))
+
 
 ###16.2 Proportion of people covered by national social protection systems
 
@@ -368,24 +325,90 @@ main <- main %>%
                                 'No'=0,
                                 'Yes'=1
                               ),
-                              label="Households covered by national social protection (one of three main income sources)"
+                              label="Household covered by national social protection (one of three main income sources)"
                               )
   )
 
-table(main$outcome16_2)
+# Extrapolation -----------------------------------------------------------
+## Multiply the indicator value with the hhsize and sum
 
-ggplot(main |> to_factor(), aes(x = outcome16_2, fill = outcome16_2)) +
-  geom_bar(aes(y = after_stat(count)/sum(after_stat(count))), width = 0.6) +
-  geom_text(aes(label = percent(after_stat(count)/sum(after_stat(count))), y= after_stat(count)/sum(after_stat(count))), stat= "count", hjust = -.25) +
-  labs(title = "Households covered by national social protection (one of three main income sources)", x = "", y = "") +
-  scale_y_continuous(expand = expansion(c(0, 0.1)), labels = percent, limits = c(0, 1)) +
-  theme_unhcr() +
-  scale_fill_unhcr_d(palette = "pal_unhcr") +
-  theme_unhcr(grid = "X", axis = "y", axis_title = FALSE) +
-  coord_flip() + guides(fill="none")
+extr <- main |>
+  mutate(across(starts_with("impact") | starts_with("outcome"), 
+                .fns = ~ . * as.numeric(hh_size), 
+                .names = "{.col}_num")) |>
+  group_by(strata) |>
+  summarise(Denominator = sum(as.numeric(hh_size), na.rm = TRUE),
+            across(ends_with("_num"), ~ sum(.x, na.rm = TRUE), .names = "sum_{.col}")) |>
+  pivot_longer(cols = ends_with("num"), names_to = "Indicator", values_to = "Numerator")
 
-ggsave("figures/outcome16_2.png", width =10, height = 4)
+## Clean Indicator column. Add percentage
+extr <- extr |>
+  mutate(
+    Indicator = str_remove_all(Indicator, "sum_|_num") |>
+      str_replace_all("impact", "impact ") |>
+      str_replace_all("outcome", "outcome ") |>
+      str_replace_all("_", ".") |>
+      str_to_title()
+  ) |>
+  mutate(Percentage = Numerator/Denominator) |>
+  select(Stratum = strata, Indicator, Numerator, Denominator, Percentage)
 
-# Save table --------------------------------------------------------------
+## Add percentage in clean format
+extr_lbl <- extr |>
+  mutate(Percentage = percent(Percentage, .01))
 
+# Plots -------------------------------------------------------------------
+### Using extrapolated values
+# Function for bar charts, using the extrapolated table indicator and title need to be adapted
+bar_chart <- function(ind, title_text) {
+  ggplot(extr |>
+           filter(Indicator == ind), 
+         aes(x = Stratum, fill = ind)) +
+    geom_bar(aes(y = Percentage),
+             width = 0.6,
+             position = "dodge",
+             stat = "identity") +
+    geom_text(aes(label = percent(Percentage, 1), y = Percentage),
+              hjust = -0.25,
+              stat = "identity") +
+    labs(title = title_text, x = "", y = "") +
+    theme_unhcr() +
+    scale_y_continuous(expand = expansion(c(0, 0.1)),
+                       labels = percent,
+                       limits = c(0, 1)) +
+    scale_fill_unhcr_d(palette = "pal_unhcr") +
+    theme_unhcr(grid = "X",
+                axis = "y",
+                axis_title = FALSE) +
+    coord_flip() +
+    guides(fill = "none")
+}
+
+bar_chart("Impact 2.2", "Impact 2.2: Proportion of households residing in physically safe and secure settlements with access to basic facilities")
+ggsave("figures/impact2_2.png", width=10, height=4)
+
+bar_chart("Impact 2.3", "Impact 2.3: Proportion of households with access to health services")
+ggsave("figures/impact2_3.png", width=10, height=4)
+
+bar_chart("Outcome 8.2", "Outcome 8.2: Proportion of households with primary reliance on clean (cooking) fuels and technology")
+ggsave("figures/outcome8_2.png", width=10, height=4)
+
+bar_chart("Outcome 9.2", "Outcome 9.2: Proportion of households with clean energy to ensure lighting")
+ggsave("figures/outcome9_2.png", width=10, height=4)
+
+bar_chart("Outcome 12.1", "Outcome 12.1: Proportion of households with at least basic drinking water services")
+ggsave("figures/outcome12_1.png", width=10, height=4)
+
+bar_chart("Outcome 12.2", "Outcome 12.2: Proportion of households with access to a safe household toilet")
+ggsave("figures/outcome12_2.png", width=10, height=4)
+
+bar_chart("Outcome 13.2", "Outcome 13.2: Proportion of households who do not self-report negative changes in their last monthly income compared to other months*")
+ggsave("figures/outcome13_2.png", width=10, height=4)
+
+bar_chart("Outcome 16.2", "Outcome 16.2: Proportion of households covered by national social protection floors/systems*")
+ggsave("figures/outcome16_2.png", width=10, height=4)
+
+# Save tables -------------------------------------------------------------
+
+write_xlsx(extr_lbl, "data/Sudan_MSNA_2024_RMS_extrapolated.xlsx")
 write_xlsx(main, "data/Sudan_MSNA_HH_IN_PERSON_DC_2024_RMS_ind.xlsx")
